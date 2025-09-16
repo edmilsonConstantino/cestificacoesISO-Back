@@ -1,0 +1,99 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | CPTec Academy Dashboard{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'admin/css/dashboard.css' %}">
+{% endblock %}
+
+{% block branding %}
+<div class="dashboard-header">
+    <div class="logo-container">
+        <i class="fas fa-graduation-cap logo-icon"></i>
+        <div class="logo-text">
+            <h1 id="site-name">CPTec Academy</h1>
+            <p class="subtitle">Dashboard Administrativo</p>
+        </div>
+    </div>
+    <div class="header-actions">
+        <div class="user-menu">
+            <i class="fas fa-user-circle"></i>
+            <span>{{ user.get_full_name|default:user.username }}</span>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block nav-sidebar %}
+<div class="modern-sidebar">
+    <div class="nav-section">
+        <div class="nav-section-title">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+        </div>
+        <div class="nav-items">
+            <a href="{% url 'admin:index' %}" class="nav-item {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                Visão Geral
+            </a>
+        </div>
+    </div>
+    
+    {% if available_apps %}
+        {% for app in available_apps %}
+            <div class="nav-section">
+                <div class="nav-section-title">
+                    {% if app.app_label == 'core' %}
+                        <i class="fas fa-users"></i> {{ app.name }}
+                    {% elif app.app_label == 'auth' %}
+                        <i class="fas fa-shield-alt"></i> {{ app.name }}
+                    {% else %}
+                        <i class="fas fa-cogs"></i> {{ app.name }}
+                    {% endif %}
+                </div>
+                <div class="nav-items">
+                    {% for model in app.models %}
+                        <a href="{{ model.admin_url }}" class="nav-item">
+                            {% if 'submission' in model.object_name|lower %}
+                                <i class="fas fa-list"></i>
+                            {% elif 'user' in model.object_name|lower %}
+                                <i class="fas fa-users"></i>
+                            {% elif 'group' in model.object_name|lower %}
+                                <i class="fas fa-users-cog"></i>
+                            {% else %}
+                                <i class="fas fa-file"></i>
+                            {% endif %}
+                            {{ model.name }}
+                            {% if model.object_name == 'Submission' and total_submissions %}
+                                <span class="nav-badge">{{ total_submissions }}</span>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="nav-section">
+        <div class="nav-section-title">
+            <i class="fas fa-chart-bar"></i> Relatórios
+        </div>
+        <div class="nav-items">
+            <a href="#" class="nav-item">
+                <i class="fas fa-download"></i>
+                Exportar Dados
+            </a>
+            <a href="#" class="nav-item">
+                <i class="fas fa-chart-pie"></i>
+                Estatísticas
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

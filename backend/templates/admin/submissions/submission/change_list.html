@@ -1,0 +1,50 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block content %}
+    <!-- Estatísticas Cards -->
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_submissions|default:0 }}</div>
+            <div class="stat-label">
+                <i class="fas fa-users"></i> Total de Submissões
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ today_submissions|default:0 }}</div>
+            <div class="stat-label">
+                <i class="fas fa-calendar-day"></i> Hoje
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ services_stats|length|default:0 }}</div>
+            <div class="stat-label">
+                <i class="fas fa-cogs"></i> Serviços Diferentes
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Serviços Mais Solicitados -->
+    {% if services_stats %}
+    <div class="stat-card" style="margin-bottom: 20px;">
+        <h3 style="margin-top: 0; color: #007cba;">
+            <i class="fas fa-chart-bar"></i> Serviços Mais Solicitados
+        </h3>
+        <div style="max-height: 200px; overflow-y: auto;">
+            {% for service in services_stats|slice:":5" %}
+                <div style="margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 0.9rem;">{{ service.service|truncatechars:30 }}</span>
+                        <strong>{{ service.count }}</strong>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #e9ecef; border-radius: 4px;">
+                        <div style="width: {% widthratio service.count total_submissions 100 %}%; height: 100%; background: #007cba; border-radius: 4px;"></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {{ block.super }}
+{% endblock %}
