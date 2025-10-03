@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'submissions',
+    'certifications',
 ]
 
 MIDDLEWARE = [
@@ -121,3 +122,7 @@ REST_FRAMEWORK = {
 ADMIN_SITE_HEADER = 'CPTec Academy Dashboard'
 ADMIN_SITE_TITLE = 'CPTec Admin'
 ADMIN_INDEX_TITLE = 'Bem-vindo ao Dashboard'
+import os
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
