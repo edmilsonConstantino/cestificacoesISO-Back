@@ -13,6 +13,7 @@ ALLOWED_HOSTS = ["*"]  # Pode deixar assim no Render
 
 # 📦 Apps
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
