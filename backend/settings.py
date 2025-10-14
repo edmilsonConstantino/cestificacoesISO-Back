@@ -5,11 +5,11 @@ from decouple import config
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 🔐 Segurança
+#  chave secreta e debug
 SECRET_KEY = config("SECRET_KEY", default="insecure-secret")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = ["*"]  # Pode deixar assim no Render
+ALLOWED_HOSTS = ["*"] 
 
 # 📦 Apps
 INSTALLED_APPS = [
@@ -29,7 +29,7 @@ INSTALLED_APPS = [
 # ⚙️ Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Adicionado p/ arquivos estáticos no Render
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

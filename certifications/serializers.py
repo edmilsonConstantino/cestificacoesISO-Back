@@ -13,3 +13,4 @@ class CertificationSerializer(serializers.ModelSerializer):
         if obj.foto:
             return request.build_absolute_uri(obj.foto.url)
         return None
+    

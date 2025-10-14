@@ -13,7 +13,7 @@ class Certification(models.Model):
     ano = models.CharField(max_length=10)
     status = models.CharField(max_length=20, default='Aprovado')
     foto = models.ImageField(upload_to='certifications/', blank=True, null=True)
-    depoimento = models.TextField(blank=True, null=True)
+    # depoimento = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.nome_completo} - {self.curso}"
