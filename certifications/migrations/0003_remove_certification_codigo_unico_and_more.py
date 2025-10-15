@@ -14,8 +14,8 @@ class Migration(migrations.Migration):
             model_name='certification',
             name='codigo_unico',
         ),
-        migrations.RemoveField(
-            model_name='certification',
-            name='depoimento',
-        ),
+        # migrations.RemoveField(
+        #     model_name='certification',
+        #     name='depoimento',
+        # ),
     ]
