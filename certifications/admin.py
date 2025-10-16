@@ -2,12 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.db import models
 from django.forms import Textarea
-from .models import Certification, Modulo
-
-class ModuloInline(admin.TabularInline):
-    model = Modulo
-    extra = 1
-    verbose_name_plural = "Módulos"
+from .models import Certification
 
 @admin.register(Certification)
 class CertificationAdmin(admin.ModelAdmin):
@@ -22,11 +17,10 @@ class CertificationAdmin(admin.ModelAdmin):
                 "nome_completo",
                 "documento",
                 "foto",
-                "declaracao",    
-                "unique_link",      
-                "mostrar_link_completo"
+                "declaracao",             
+                          
+                "mostrar_link_completo",   
             ),
-            
         }),
         ("Informações do Curso", {
             "fields": ("curso", "modulo", "duracao", "carga_horaria", "data_conclusao", "ano")
@@ -35,8 +29,6 @@ class CertificationAdmin(admin.ModelAdmin):
             "fields": ("codigo", "status")
         }),
     )
-
-    inlines = [ModuloInline]
 
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows': 6, 'cols': 80, 'style': 'width: 100%;'})},
