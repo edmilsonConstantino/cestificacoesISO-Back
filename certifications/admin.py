@@ -1,12 +1,48 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Certification
+from django.db import models
+from django.forms import Textarea
+from .models import Certification, Modulo
+
+class ModuloInline(admin.TabularInline):
+    model = Modulo
+    extra = 1
+    verbose_name_plural = "Módulos (deixe vazio se não houver)"
 
 @admin.register(Certification)
 class CertificationAdmin(admin.ModelAdmin):
-    list_display = ("nome_completo", "curso", "status", "ver_link")
+    list_display = ("nome_completo", "curso", "modulo", "status", "ver_link")
     readonly_fields = ('unique_link', 'mostrar_link_completo')
-    
+    list_filter = ("status",)
+    search_fields = ("nome_completo", "curso", "codigo", "modulo")
+
+    fieldsets = (
+        ("Dados do Estudante", {
+            "fields": (
+                "nome_completo",
+                "documento",
+                "foto",
+                "declaracao",         # ✅ Incluído aqui
+                "unique_link",        # ✅ Incluído aqui também
+                "mostrar_link_completo"
+            ),
+            "description": "Informações do estudante"
+        }),
+        ("Informações do Curso", {
+            "fields": ("curso", "modulo", "duracao", "carga_horaria", "data_conclusao", "ano")
+        }),
+        ("Status e Identificação", {
+            "fields": ("codigo", "status")
+        }),
+    )
+
+    inlines = [ModuloInline]
+
+    # 🔹 Faz o campo 'declaracao' ser um textarea maior
+    formfield_overrides = {
+        models.TextField: {'widget': Textarea(attrs={'rows': 6, 'cols': 80, 'style': 'width: 100%;'})},
+    }
+
     def ver_link(self, obj):
         if obj.unique_link:
             link = f"https://cptec-co-mz.vercel.app/declaracoes/{obj.unique_link}"
@@ -16,7 +52,7 @@ class CertificationAdmin(admin.ModelAdmin):
             )
         return "-"
     ver_link.short_description = "Link Único"
-    
+
     def mostrar_link_completo(self, obj):
         if obj.unique_link:
             link = f"https://cptec-co-mz.vercel.app/declaracoes/{obj.unique_link}"
