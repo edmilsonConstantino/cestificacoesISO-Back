@@ -7,7 +7,7 @@ from .models import Certification, Modulo
 class ModuloInline(admin.TabularInline):
     model = Modulo
     extra = 1
-    verbose_name_plural = "Módulos (deixe vazio se não houver)"
+    verbose_name_plural = "Módulos"
 
 @admin.register(Certification)
 class CertificationAdmin(admin.ModelAdmin):
@@ -22,11 +22,11 @@ class CertificationAdmin(admin.ModelAdmin):
                 "nome_completo",
                 "documento",
                 "foto",
-                "declaracao",         # ✅ Incluído aqui
-                "unique_link",        # ✅ Incluído aqui também
+                "declaracao",    
+                "unique_link",      
                 "mostrar_link_completo"
             ),
-            "description": "Informações do estudante"
+            
         }),
         ("Informações do Curso", {
             "fields": ("curso", "modulo", "duracao", "carga_horaria", "data_conclusao", "ano")
@@ -38,7 +38,6 @@ class CertificationAdmin(admin.ModelAdmin):
 
     inlines = [ModuloInline]
 
-    # 🔹 Faz o campo 'declaracao' ser um textarea maior
     formfield_overrides = {
         models.TextField: {'widget': Textarea(attrs={'rows': 6, 'cols': 80, 'style': 'width: 100%;'})},
     }
