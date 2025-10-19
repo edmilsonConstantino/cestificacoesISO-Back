@@ -7,7 +7,7 @@ from django.views.static import serve
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/submissions/', include('submissions.urls')),
-    path('api/certifications/', include('certifications.urls')),  # prefixo organizado
+    path('api/certifications/', include('certifications.urls')), 
 ]
 urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
