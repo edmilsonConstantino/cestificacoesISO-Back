@@ -20,5 +20,5 @@ class CertificationSerializer(serializers.ModelSerializer):
     def get_link_completo(self, obj):
         if obj.unique_link:
             # ALTERE para o domínio do seu frontend
-            return f"http://localhost:8080/declaracoes/{obj.unique_link}"
+            return f"https://www.cptec.co.mz/declaracoes{obj.unique_link}"
         return None
