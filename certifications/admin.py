@@ -44,7 +44,7 @@ class CertificationAdmin(admin.ModelAdmin):
 
     def ver_link(self, obj):
         if obj.unique_link:
-            link = f"https://www.cptec.co.mz/declaracoes{obj.unique_link}"
+            link = f"https://www.cptec.co.mz/declaracoes/{obj.unique_link}"
             return format_html(
                 '<a href="{}" target="_blank" '
                 'style="color: #667eea; font-weight: bold;">🔗 Ver Link</a>',
@@ -55,7 +55,7 @@ class CertificationAdmin(admin.ModelAdmin):
 
     def mostrar_link_completo(self, obj):
         if obj.unique_link:
-            link = f"https://www.cptec.co.mz/declaracoes{obj.unique_link}"
+            link = f"https://www.cptec.co.mz/declaracoes/{obj.unique_link}"
             return format_html(
                 '<div style="padding: 10px; background: #f0f0f0; border-radius: 5px;">'
                 '<strong>Link Único:</strong><br>'
