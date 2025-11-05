@@ -22,3 +22,4 @@ tzdata==2025.2
 whitenoise==6.11.0
 django-jazzmin
 psycopg2-binary==2.9.7
+
