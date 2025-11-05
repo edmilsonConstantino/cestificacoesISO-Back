@@ -10,25 +10,32 @@ class ModuloInline(admin.TabularInline):
     extra = 1
     verbose_name = "Módulo"
     verbose_name_plural = "Adicionar Módulos"
-    fields = ("nome",) 
+    fields = ("nome",)
 
 
 @admin.register(Certification)
 class CertificationAdmin(admin.ModelAdmin):
-    list_display = ("nome_completo", "curso", "status", "ver_link")
-    readonly_fields = ('unique_link', 'mostrar_link_completo')
-    list_filter = ("status",)
-    search_fields = ("nome_completo", "curso", "codigo")
+    list_display = ("nome_completo", "curso", "status", "data_conclusao", "ver_link")
+    readonly_fields = ('unique_link', 'mostrar_link_completo', 'created_at', 'updated_at')
+    list_filter = ("status", "ano", "data_conclusao")
+    search_fields = ("nome_completo", "curso", "codigo", "documento")
+    date_hierarchy = 'data_conclusao'
+    list_per_page = 50
+    ordering = ('-created_at',)
 
     fieldsets = (
         ("Dados do Estudante", {
             "fields": ("nome_completo", "documento", "foto", "declaracao", "mostrar_link_completo"),
         }),
         ("Informações do Curso", {
-            "fields": ("curso", "duracao", "carga_horaria", "data_conclusao", "ano")
+            "fields": ("curso", "duracao", "carga_horaria", "data_conclusao", "ano", "descricao")
         }),
         ("Status e Identificação", {
             "fields": ("codigo", "status")
+        }),
+        ("Informações do Sistema", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",),
         }),
     )
 
@@ -67,3 +74,26 @@ class CertificationAdmin(admin.ModelAdmin):
             )
         return "O Link será gerado automaticamente ao salvar"
     mostrar_link_completo.short_description = "Link para Compartilhar"
+
+    def save_model(self, request, obj, form, change):
+        """Adiciona logging ao salvar"""
+        if not change:
+            # Novo objeto
+            super().save_model(request, obj, form, change)
+            self.message_user(request, f"Certificação criada com sucesso para {obj.nome_completo}")
+        else:
+            # Atualização
+            super().save_model(request, obj, form, change)
+            self.message_user(request, f"Certificação de {obj.nome_completo} atualizada")
+
+
+@admin.register(Modulo)
+class ModuloAdmin(admin.ModelAdmin):
+    list_display = ("nome", "certification", "get_curso")
+    list_filter = ("certification__curso",)
+    search_fields = ("nome", "certification__curso", "certification__nome_completo")
+    ordering = ('-id',)
+
+    def get_curso(self, obj):
+        return obj.certification.curso
+    get_curso.short_description = "Curso"

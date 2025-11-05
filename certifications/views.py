@@ -1,22 +1,113 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework import status
+from django.db.models import Q
+from django.core.exceptions import ValidationError
+import logging
+
 from .models import Certification
 from .serializers import CertificationSerializer
 
+logger = logging.getLogger(__name__)
+
 class CertificationViewSet(viewsets.ModelViewSet):
-    queryset = Certification.objects.all()
+    queryset = Certification.objects.select_related().prefetch_related('modulos')
     serializer_class = CertificationSerializer
+    filterset_fields = ['status', 'curso', 'ano']
+    search_fields = ['nome_completo', 'documento', 'codigo', 'curso']
+    ordering_fields = ['data_conclusao', 'created_at', 'nome_completo']
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        """Otimiza queries com filtros adicionais"""
+        queryset = super().get_queryset()
+        
+        # Filtro por nome
+        nome = self.request.query_params.get('nome', None)
+        if nome:
+            queryset = queryset.filter(nome_completo__icontains=nome)
+        
+        # Filtro por documento
+        documento = self.request.query_params.get('documento', None)
+        if documento:
+            queryset = queryset.filter(documento__iexact=documento)
+            
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        """Cria certificação com tratamento de erros melhorado"""
+        try:
+            return super().create(request, *args, **kwargs)
+        except ValidationError as e:
+            logger.error(f"Erro de validação ao criar certificação: {str(e)}")
+            return Response(
+                {"error": "Dados inválidos", "details": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Erro ao criar certificação: {str(e)}")
+            return Response(
+                {"error": "Erro ao criar certificação"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def update(self, request, *args, **kwargs):
+        """Atualiza certificação com tratamento de erros"""
+        try:
+            return super().update(request, *args, **kwargs)
+        except ValidationError as e:
+            logger.error(f"Erro de validação ao atualizar certificação: {str(e)}")
+            return Response(
+                {"error": "Dados inválidos", "details": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Erro ao atualizar certificação: {str(e)}")
+            return Response(
+                {"error": "Erro ao atualizar certificação"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     @action(detail=False, methods=['get'], url_path='link/(?P<unique_link>[^/.]+)')
     def get_by_link(self, request, unique_link=None):
+        """Busca certificação por link único"""
         try:
-            certification = Certification.objects.get(unique_link=unique_link)
+            certification = Certification.objects.select_related().prefetch_related('modulos').get(
+                unique_link=unique_link
+            )
             serializer = self.get_serializer(certification)
             return Response(serializer.data)
         except Certification.DoesNotExist:
+            logger.warning(f"Certificação não encontrada para link: {unique_link}")
             return Response(
                 {"error": "Certificação não encontrada"}, 
                 status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Erro ao buscar certificação por link: {str(e)}")
+            return Response(
+                {"error": "Erro ao buscar certificação"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], url_path='codigo/(?P<codigo>[^/.]+)')
+    def get_by_codigo(self, request, codigo=None):
+        """Busca certificação por código"""
+        try:
+            certification = Certification.objects.select_related().prefetch_related('modulos').get(
+                codigo=codigo
+            )
+            serializer = self.get_serializer(certification)
+            return Response(serializer.data)
+        except Certification.DoesNotExist:
+            logger.warning(f"Certificação não encontrada para código: {codigo}")
+            return Response(
+                {"error": "Certificação não encontrada"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Erro ao buscar certificação por código: {str(e)}")
+            return Response(
+                {"error": "Erro ao buscar certificação"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

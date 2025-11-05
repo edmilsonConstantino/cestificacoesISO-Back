@@ -27,9 +27,10 @@ class SubmissionAdmin(admin.ModelAdmin):
     )
     
     search_fields = ('name', 'email', 'phone', 'service', 'message')
-    readonly_fields = ('created_at', 'submission_summary')
+    readonly_fields = ('created_at', 'updated_at', 'submission_summary')
     ordering = ('-created_at',)
-    list_per_page = 20
+    list_per_page = 50
+    date_hierarchy = 'created_at'
     
     actions = ['export_to_csv', 'mark_as_contacted']
     
@@ -43,7 +44,7 @@ class SubmissionAdmin(admin.ModelAdmin):
             'classes': ('wide',)
         }),
         ('✅ Consentimento e Dados do Sistema', {
-            'fields': ('consent', 'created_at', 'submission_summary'),
+            'fields': ('consent', 'created_at', 'updated_at', 'submission_summary'),
             'classes': ('collapse',)
         }),
     )
