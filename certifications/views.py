@@ -3,6 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Q
 from django.core.exceptions import ValidationError
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 import logging
 
 from .models import Certification
@@ -111,3 +114,18 @@ class CertificationViewSet(viewsets.ModelViewSet):
                 {"error": "Erro ao buscar certificação"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+def certification_public_view(request, unique_link):
+    """View pública para exibir certificação sem autenticação"""
+    certification = get_object_or_404(
+        Certification.objects.prefetch_related('modulos'),
+        unique_link=unique_link
+    )
+    
+    context = {
+        'certification': certification,
+        'modulos': certification.modulos.all()
+    }
+    
+    return render(request, 'certifications/public_view.html', context)

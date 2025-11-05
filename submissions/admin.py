@@ -1,23 +1,20 @@
 from django.contrib import admin
 from django.http import HttpResponse
-from django.db.models import Count
 from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 import csv
 import datetime
 from .models import Submission
 
 @admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
-
+    
+    # Configurações de listagem
     list_display = (
-        'name_with_icon', 
-        'email_link', 
-        'phone_formatted',
-        'service_badge', 
-        'created_at_formatted', 
-        'consent_status',
-        'actions_column'
+        'name_display', 
+        'email_display', 
+        'service_display', 
+        'created_display', 
+        'consent_display'
     )
     
     list_filter = (
@@ -27,149 +24,162 @@ class SubmissionAdmin(admin.ModelAdmin):
     )
     
     search_fields = ('name', 'email', 'phone', 'service', 'message')
-    readonly_fields = ('created_at', 'updated_at', 'submission_summary')
+    
+    # Todos os campos são readonly pois vêm do frontend
+    readonly_fields = ('name', 'email', 'phone', 'service', 'message', 'consent', 'created_at', 'updated_at', 'submission_detail')
+    
     ordering = ('-created_at',)
     list_per_page = 50
     date_hierarchy = 'created_at'
     
-    actions = ['export_to_csv', 'mark_as_contacted']
+    actions = ['export_to_csv']
     
     fieldsets = (
-        ('👤 Informações Pessoais', {
+        ('Informações Pessoais', {
             'fields': ('name', 'email', 'phone'),
-            'classes': ('wide',)
+            'classes': ('wide',),
+            'description': 'Dados de contato do solicitante (somente leitura)'
         }),
-        ('📋 Detalhes da Solicitação', {
+        ('Detalhes da Solicitação', {
             'fields': ('service', 'message'),
-            'classes': ('wide',)
+            'classes': ('wide',),
+            'description': 'Informações sobre o serviço solicitado (somente leitura)'
         }),
-        ('✅ Consentimento e Dados do Sistema', {
-            'fields': ('consent', 'created_at', 'updated_at', 'submission_summary'),
-            'classes': ('collapse',)
+        ('Sistema', {
+            'fields': ('consent', 'created_at', 'updated_at', 'submission_detail'),
+            'classes': ('collapse',),
+            'description': 'Informações do sistema e consentimento'
         }),
     )
+    
+    # Desabilita a edição de submissões
+    def has_add_permission(self, request):
+        """Desabilita adição manual de submissões"""
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        """Permite visualização mas não edição"""
+        return True
+    
+    def has_delete_permission(self, request, obj=None):
+        """Permite deleção de submissões"""
+        return True
 
-    def name_with_icon(self, obj):
+    # Métodos de exibição personalizados
+    def name_display(self, obj):
         return format_html(
-            '<span style="font-weight: bold;"><i style="color: #007cba; margin-right: 5px;">👤</i>{}</span>',
+            '<div style="display: flex; align-items: center; gap: 8px;">'
+            '<span style="font-size: 18px;">👤</span>'
+            '<strong>{}</strong>'
+            '</div>',
             obj.name
         )
-    name_with_icon.short_description = 'Nome'
-    name_with_icon.admin_order_field = 'name'
+    name_display.short_description = 'Nome'
+    name_display.admin_order_field = 'name'
 
-    def email_link(self, obj):
+    def email_display(self, obj):
         return format_html(
-            '<a href="mailto:{}" style="color: #007cba; text-decoration: none;">'
-            '📧 {}</a>',
+            '<a href="mailto:{}" style="color: #0066cc; text-decoration: none; display: flex; align-items: center; gap: 6px;">'
+            '<span style="font-size: 16px;">📧</span>{}</a>',
             obj.email, obj.email
         )
-    email_link.short_description = 'Email'
-    email_link.admin_order_field = 'email'
+    email_display.short_description = 'Email'
+    email_display.admin_order_field = 'email'
 
-    def phone_formatted(self, obj):
-            return format_html(
-                '<span style="display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(90deg, #e0f7fa 0%, #fffde4 100%); padding: 4px 10px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); font-family: monospace; font-size: 15px; font-weight: 500; letter-spacing: 1px;">'
-                '<span style="background: #00bcd4; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-right: 4px;">📞</span>'
-                '<span style="color: #333;">{}</span>'
-                '</span>',
-                obj.phone
-            )
-    phone_formatted.short_description = 'Telefone'
-    phone_formatted.admin_order_field = 'phone'
+    def phone_display(self, obj):
+        return format_html(
+            '<a href="tel:{}" style="color: #00cc66; text-decoration: none; display: flex; align-items: center; gap: 6px;">'
+            '<span style="font-size: 16px;">📱</span>'
+            '<code style="background: #f0f0f0; padding: 2px 8px; border-radius: 4px;">{}</code></a>',
+            obj.phone, obj.phone
+        )
+    phone_display.short_description = 'Telefone'
+    phone_display.admin_order_field = 'phone'
 
-    def service_badge(self, obj):
-
-        color_map = {
-            'ISO 14001 - Gestão Ambiental': '#28a745',
-            'ISO 9001 - Gestão da Qualidade': '#007cba',
-            'ISO 45001 - Saúde e Segurança': '#dc3545',
-            'Higiene, Segurança e Saúde no Trabalho': '#fd7e14',
-            'Monitoria, Gestão e Avaliação de Projectos': '#6f42c1',
+    def service_display(self, obj):
+        colors = {
+            'ISO 14001': '#28a745',
+            'ISO 9001': '#007bff',
+            'ISO 45001': '#dc3545',
+            'Higiene': '#fd7e14',
+            'Monitoria': '#6f42c1',
             'NEBOSH': '#20c997'
         }
-        color = color_map.get(obj.service, '#6c757d')
+        
+        color = next((v for k, v in colors.items() if k in obj.service), '#6c757d')
         
         return format_html(
-            '<span style="display: inline-flex; align-items: center; gap: 7px; background: linear-gradient(90deg, {} 0%, #f8f9fa 100%); padding: 6px 14px; border-radius: 16px; box-shadow: 0 1px 6px rgba(0,0,0,0.08); font-size: 13px; font-weight: 600; letter-spacing: 0.5px;">'
-            '<span style="background: {}; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 15px;">🏷️</span>'
-            '<span style="color: #222;">{}</span>'
-            '</span>',
-            color, color, obj.service[:20] + ('...' if len(obj.service) > 20 else '')
+            '<span style="background: {}; color: white; padding: 4px 12px; border-radius: 12px; '
+            'font-size: 12px; font-weight: 500; display: inline-block;">{}</span>',
+            color, obj.service[:30] + ('...' if len(obj.service) > 30 else '')
         )
-    service_badge.short_description = 'Serviço'
-    service_badge.admin_order_field = 'service'
+    service_display.short_description = 'Serviço'
+    service_display.admin_order_field = 'service'
 
-    def created_at_formatted(self, obj):
+    def created_display(self, obj):
         now = datetime.datetime.now(obj.created_at.tzinfo)
         diff = now - obj.created_at
         
         if diff.days == 0:
             if diff.seconds < 3600:
                 time_str = f"{diff.seconds // 60} min atrás"
-                color = "#28a745"
+                badge_color = '#28a745'
             else:
                 time_str = f"{diff.seconds // 3600}h atrás"
-                color = "#ffc107"
+                badge_color = '#ffc107'
         elif diff.days == 1:
             time_str = "Ontem"
-            color = "#fd7e14"
-        elif diff.days < 7:
-            time_str = f"{diff.days} dias atrás"
-            color = "#6c757d"
+            badge_color = '#fd7e14'
         else:
             time_str = obj.created_at.strftime("%d/%m/%Y")
-            color = "#6c757d"
+            badge_color = '#6c757d'
             
         return format_html(
-            '<span style="color: {}; font-weight: bold;">'
-            '🕒 {}</span><br>'
-            '<small style="color: #6c757d;">{}</small>',
-            color, time_str, obj.created_at.strftime("%H:%M")
+            '<div style="display: flex; flex-direction: column; gap: 2px;">'
+            '<span style="background: {}; color: white; padding: 2px 8px; border-radius: 8px; '
+            'font-size: 11px; font-weight: 500; display: inline-block; width: fit-content;">{}</span>'
+            '<small style="color: #6c757d;">{}</small>'
+            '</div>',
+            badge_color, time_str, obj.created_at.strftime("%H:%M")
         )
-    created_at_formatted.short_description = 'Data/Hora'
-    created_at_formatted.admin_order_field = 'created_at'
+    created_display.short_description = 'Data'
+    created_display.admin_order_field = 'created_at'
 
-    def consent_status(self, obj):
+    def consent_display(self, obj):
         if obj.consent:
             return format_html(
-                '<span style="color: #28a745; font-weight: bold;">'
-                '✅ Autorizado</span>'
+                '<span style="color: #28a745; font-weight: 600;">✓ Sim</span>'
             )
-        else:
-            return format_html(
-                '<span style="color: #dc3545; font-weight: bold;">'
-                '❌ Não Autorizado</span>'
-            )
-    consent_status.short_description = 'Consentimento'
-    consent_status.admin_order_field = 'consent'
-
-    def actions_column(self, obj):
         return format_html(
-            '<a href="mailto:{}?subject=Re: {} - CPTec Academy" style="margin-right: 10px; color: #007cba;" title="Responder por email">'
-            '↩️</a>'
-            '<a href="tel:{}" style="color: #28a745;" title="Ligar">'
-            '📞</a>',
-            obj.email, obj.service, obj.phone
+            '<span style="color: #dc3545; font-weight: 600;">✗ Não</span>'
         )
-    actions_column.short_description = 'Ações'
+    consent_display.short_description = 'Consentimento'
+    consent_display.admin_order_field = 'consent'
 
-    def submission_summary(self, obj):
+    def submission_detail(self, obj):
         return format_html(
-            '<div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #007cba;">'
-            '<h4 style="margin-top: 0; color: #007cba;">📊 Resumo da Submissão</h4>'
-            '<p><strong>ID:</strong> #{}</p>'
-            '<p><strong>Submissão:</strong> {}</p>'
-            '<p><strong>Mensagem:</strong></p>'
-            '<div style="background: white; padding: 10px; border-radius: 3px; max-height: 100px; overflow-y: auto;">{}</div>'
+            '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #007bff;">'
+            '<h3 style="margin-top: 0; color: #007bff; font-size: 16px;">Detalhes da Submissão</h3>'
+            '<table style="width: 100%; border-collapse: collapse;">'
+            '<tr><td style="padding: 8px; font-weight: 600;">ID:</td><td style="padding: 8px;">#{}</td></tr>'
+            '<tr style="background: #fff;"><td style="padding: 8px; font-weight: 600;">Data/Hora:</td><td style="padding: 8px;">{}</td></tr>'
+            '<tr><td style="padding: 8px; font-weight: 600; vertical-align: top;">Mensagem:</td>'
+            '<td style="padding: 8px;"><div style="background: white; padding: 12px; border-radius: 4px; '
+            'max-height: 150px; overflow-y: auto; white-space: pre-wrap;">{}</div></td></tr>'
+            '</table>'
             '</div>',
-            obj.id, obj.created_at.strftime("%d/%m/%Y às %H:%M"), 
+            obj.id, 
+            obj.created_at.strftime("%d/%m/%Y às %H:%M"),
             obj.message or "Nenhuma mensagem adicional"
         )
-    submission_summary.short_description = 'Resumo Completo'
+    submission_detail.short_description = 'Detalhes Completos'
 
+    # Ações personalizadas
     def export_to_csv(self, request, queryset):
-        response = HttpResponse(content_type='text/csv')
+        """Exporta submissões selecionadas para CSV"""
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename="submissions_{datetime.date.today()}.csv"'
+        response.write('\ufeff')  # BOM para Excel
         
         writer = csv.writer(response)
         writer.writerow(['Nome', 'Email', 'Telefone', 'Serviço', 'Mensagem', 'Data', 'Consentimento'])
@@ -185,39 +195,18 @@ class SubmissionAdmin(admin.ModelAdmin):
                 'Sim' if submission.consent else 'Não'
             ])
         
-        self.message_user(request, f'{queryset.count()} submissões exportadas com sucesso!')
+        self.message_user(request, f'{queryset.count()} submissões exportadas com sucesso!', 'success')
         return response
     
-    export_to_csv.short_description = "📥 Exportar selecionadas para CSV"
+    export_to_csv.short_description = "📥 Exportar para CSV"
 
-    def mark_as_contacted(self, request, queryset):
-        count = queryset.count()
-        self.message_user(request, f'{count} submissões marcadas como contatadas!')
-    
-    mark_as_contacted.short_description = "✅ Marcar como constatadas"
-
-    def changelist_view(self, request, extra_context=None):
-        extra_context = extra_context or {}
-        
-        total_submissions = Submission.objects.count()
-        today_submissions = Submission.objects.filter(
-            created_at__date=datetime.date.today()
-        ).count()
-        
-        services_stats = Submission.objects.values('service').annotate(
-            count=Count('service')
-        ).order_by('-count')
-        
-        extra_context.update({
-            'total_submissions': total_submissions,
-            'today_submissions': today_submissions,
-            'services_stats': services_stats,
-        })
-        
-        return super().changelist_view(request, extra_context)
+    class Media:
+        css = {
+            'all': ('admin/css/custom_admin.css',)
+        }
 
 
-# Personalizar o site admin
-admin.site.site_header = 'CPTec Academy - Dashboard'
+# Personalização do site admin
+admin.site.site_header = 'CPTec Academy - Painel Administrativo'
 admin.site.site_title = 'CPTec Admin'
-admin.site.index_title = 'Bem-vindo ao Dashboard CPTec Academy'
+admin.site.index_title = 'Bem-vindo ao Dashboard'

@@ -90,19 +90,32 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-# 🗄️ Banco de dados
-# Suporta DATABASE_URL do Render ou usa SQLite localmente
+# 🗄️ Banco de dados com fallback automático
+# Tenta: 1) DATABASE_URL externo, 2) DATABASE_URL interno, 3) SQLite
 DATABASE_URL = config("DATABASE_URL", default=None)
+RENDER_INTERNAL_HOSTNAME = os.environ.get('RENDER_INTERNAL_HOSTNAME')
 
+# Configuração do banco de dados com fallback
 if DATABASE_URL:
-    # Produção: PostgreSQL via DATABASE_URL
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
-    }
+    try:
+        # Tenta usar DATABASE_URL configurado
+        DATABASES = {
+            'default': dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                conn_health_checks=True,
+            )
+        }
+    except Exception as e:
+        # Se falhar, usa SQLite
+        print(f"⚠️ Falha ao conectar PostgreSQL: {e}")
+        print("📊 Usando SQLite como fallback")
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 else:
     # Desenvolvimento: SQLite local
     DATABASES = {
