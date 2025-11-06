@@ -113,7 +113,7 @@ class CertificationAdmin(admin.ModelAdmin):
 
     def link_display(self, obj):
         if obj.unique_link:
-            public_url = f"/api/certifications/view/{obj.unique_link}/"
+            public_url = f"http://localhost:8080/declaracoes/{obj.unique_link}"
             return format_html(
                 '<a href="{}" target="_blank" '
                 'style="background: #007bff; color: white; padding: 6px 12px; border-radius: 6px; '
@@ -127,7 +127,7 @@ class CertificationAdmin(admin.ModelAdmin):
     def link_card(self, obj):
         if obj.unique_link:
             public_url = f"/api/certifications/view/{obj.unique_link}/"
-            share_url = f"https://www.cptec.co.mz/declaracoes/{obj.unique_link}"
+            share_url = f"http://localhost:8080/declaracoes/{obj.unique_link}"
             return format_html(
                 '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); '
                 'padding: 24px; border-radius: 12px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">'
@@ -156,7 +156,7 @@ class CertificationAdmin(admin.ModelAdmin):
                 '✨ Clique no campo para selecionar e copiar o link automaticamente'
                 '</p>'
                 '</div>',
-                share_url, public_url, share_url
+                share_url, share_url, share_url
             )
         return format_html(
             '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; '
