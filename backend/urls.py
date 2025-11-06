@@ -25,10 +25,10 @@ urlpatterns = [
 ]
 
 # Servir arquivos de mídia (somente em desenvolvimento)
-if settings.DEBUG:
-    urlpatterns += [
-        re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
-    ]
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]
+
 
 # Configurações do admin
 admin.site.site_header = settings.ADMIN_SITE_HEADER
