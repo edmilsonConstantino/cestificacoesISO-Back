@@ -198,7 +198,7 @@ class CertificationAdmin(admin.ModelAdmin):
                 '  document.getElementById("id_unique_link").value = newLink;'
                 '  alert("Link atualizado! Clique em SALVAR no final da página para confirmar.");'
                 '  cancelEdit();'
-                '  document.getElementById("linkInput").value = "https://www.cptec.co.mz/declaracoes/" ;'
+                '  document.getElementById("linkInput").value = newLink;'
                 '}}'
                 '</script>',
                 share_url, obj.unique_link, share_url, share_url
