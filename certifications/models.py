@@ -89,7 +89,7 @@ class Certification(models.Model):
         unique=True,
         blank=True,
         null=True,
-        editable=True,
+        editable=False,
         verbose_name="Link Único de Compartilhamento",
         help_text="Gerado automaticamente ao salvar",
         db_index=True
