@@ -8,7 +8,6 @@ from .models import Submission
 @admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
     
-    # Configurações de listagem
     list_display = (
         'name_display', 
         'email_display', 
