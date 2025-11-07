@@ -18,11 +18,9 @@ class CertificationAdmin(admin.ModelAdmin):
     
     # Configurações de listagem
     list_display = ("student_info", "course_info", "status_display", "date_display", "link_display")
-    readonly_fields = ('unique_link', 'link_card', 'created_at', 'updated_at')
+    readonly_fields = ('link_card', 'created_at', 'updated_at')
     list_filter = ("status", "ano", "data_conclusao", "curso")
     search_fields = ("nome_completo", "curso", "codigo", "documento")
-    #para botao de edicao de link unico
-    readonly_fields = ('unique_link', 'link_card', 'created_at', 'updated_at', 'generate_link_button')
     date_hierarchy = 'data_conclusao'
     list_per_page = 50
     ordering = ('-created_at',)
@@ -41,8 +39,8 @@ class CertificationAdmin(admin.ModelAdmin):
             'description': 'Status da certificação e texto da declaração'
         }),
         ("Link de Compartilhamento", {
-            "fields": ("link_card",),
-            'description': 'Link único para compartilhar a certificação'
+            "fields": ("unique_link", "link_card"),
+            'description': 'Edite o link único ou deixe em branco para gerar automaticamente'
         }),
         ("Informações do Sistema", {
             "fields": ("created_at", "updated_at"),
@@ -50,20 +48,6 @@ class CertificationAdmin(admin.ModelAdmin):
         }),
         
     )
-
-    def generate_link_button(self, obj):
-        if not obj.pk:
-            return "Salve primeiro para gerar o link."
-        if obj.unique_link:
-            return format_html(
-                '<span style="color: #28a745; font-weight: 500;">Link já gerado!</span>'
-            )
-        # botão chamando URL de admin customizada
-        return format_html(
-            '<a class="button" href="{}">Gerar Link Único</a>',
-            f'/admin/certifications/certification/{obj.pk}/generate_link/'
-        )
-    generate_link_button.short_description = "Ações"
 
     inlines = [ModuloInline]
 
@@ -148,15 +132,35 @@ class CertificationAdmin(admin.ModelAdmin):
             return format_html(
                 '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); '
                 'padding: 24px; border-radius: 12px; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">'
-                '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">'
+                '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">'
+                '<div style="display: flex; align-items: center; gap: 12px;">'
                 '<span style="font-size: 32px;">🔗</span>'
                 '<h3 style="margin: 0; font-size: 18px;">Link de Compartilhamento</h3>'
                 '</div>'
-                '<div style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px;">'
-                '<input type="text" value="{}" readonly '
+                '<button onclick="editLink()" id="editLinkBtn" '
+                'style="background: rgba(255,255,255,0.3); color: white; padding: 8px 16px; '
+                'border-radius: 6px; border: none; cursor: pointer; font-weight: 500; '
+                'backdrop-filter: blur(10px); font-size: 14px;">✏️ Editar Link</button>'
+                '</div>'
+                '<div id="linkDisplay" style="background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px;">'
+                '<input type="text" id="linkInput" value="{}" readonly '
                 'style="width: 100%; border: none; padding: 8px; font-family: monospace; color: #333; '
-                'font-size: 13px;" onclick="this.select(); document.execCommand(\'copy\'); '
+                'font-size: 13px; background: transparent;" onclick="this.select(); document.execCommand(\'copy\'); '
                 'alert(\'Link copiado para a área de transferência!\');">'
+                '</div>'
+                '<div id="editControls" style="display: none; margin-bottom: 12px; gap: 8px;">'
+                '<input type="text" id="newLinkInput" value="{}" '
+                'style="flex: 1; padding: 10px; border: 2px solid rgba(255,255,255,0.3); '
+                'border-radius: 6px; font-family: monospace; background: rgba(255,255,255,0.95); '
+                'color: #333; font-size: 13px;">'
+                '<div style="display: flex; gap: 8px; margin-top: 8px;">'
+                '<button onclick="saveLink()" '
+                'style="flex: 1; background: #28a745; color: white; padding: 10px; '
+                'border-radius: 6px; border: none; cursor: pointer; font-weight: 500;">💾 Salvar</button>'
+                '<button onclick="cancelEdit()" '
+                'style="flex: 1; background: #dc3545; color: white; padding: 10px; '
+                'border-radius: 6px; border: none; cursor: pointer; font-weight: 500;">❌ Cancelar</button>'
+                '</div>'
                 '</div>'
                 '<div style="display: flex; gap: 12px;">'
                 '<a href="{}" target="_blank" '
@@ -172,8 +176,32 @@ class CertificationAdmin(admin.ModelAdmin):
                 '<p style="margin: 16px 0 0 0; font-size: 12px; opacity: 0.9;">'
                 '✨ Clique no campo para selecionar e copiar o link automaticamente'
                 '</p>'
-                '</div>',
-                share_url, share_url, share_url
+                '</div>'
+                '<script>'
+                'function editLink() {{'
+                '  document.getElementById("linkDisplay").style.display = "none";'
+                '  document.getElementById("editControls").style.display = "block";'
+                '  document.getElementById("editLinkBtn").style.display = "none";'
+                '  document.getElementById("newLinkInput").focus();'
+                '}}'
+                'function cancelEdit() {{'
+                '  document.getElementById("linkDisplay").style.display = "block";'
+                '  document.getElementById("editControls").style.display = "none";'
+                '  document.getElementById("editLinkBtn").style.display = "block";'
+                '}}'
+                'function saveLink() {{'
+                '  var newLink = document.getElementById("newLinkInput").value.trim();'
+                '  if (!newLink) {{'
+                '    alert("O link não pode estar vazio!");'
+                '    return;'
+                '  }}'
+                '  document.getElementById("id_unique_link").value = newLink;'
+                '  alert("Link atualizado! Clique em SALVAR no final da página para confirmar.");'
+                '  cancelEdit();'
+                '  document.getElementById("linkInput").value = "https://www.cptec.co.mz/declaracoes/" + newLink;'
+                '}}'
+                '</script>',
+                share_url, obj.unique_link, share_url, share_url
             )
         return format_html(
             '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; '
