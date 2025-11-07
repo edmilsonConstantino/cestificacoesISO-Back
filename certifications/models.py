@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import MinLengthValidator
+from django.core.exceptions import ValidationError
 import uuid
 
 
@@ -89,9 +90,8 @@ class Certification(models.Model):
         unique=True,
         blank=True,
         null=True,
-        editable=True,
         verbose_name="Link Único de Compartilhamento",
-        help_text="Gerado automaticamente ao salvar",
+        help_text="Você pode editar este link. Deixe em branco para gerar automaticamente.",
         db_index=True
     )
     
@@ -106,7 +106,18 @@ class Certification(models.Model):
         help_text="Data e hora da última modificação"
     )
 
+    def clean(self):
+        """Validação customizada para o link único"""
+        if self.unique_link:
+            # Remove espaços em branco
+            self.unique_link = self.unique_link.strip()
+            
+            # Verifica se outro registro já usa este link
+            if Certification.objects.exclude(pk=self.pk).filter(unique_link=self.unique_link).exists():
+                raise ValidationError({'unique_link': 'Este link já está sendo usado por outra certificação.'})
+
     def save(self, *args, **kwargs):
+        # Gera link automático apenas se estiver vazio
         if not self.unique_link:
             self.unique_link = str(uuid.uuid4())
         super().save(*args, **kwargs)

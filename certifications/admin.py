@@ -21,6 +21,8 @@ class CertificationAdmin(admin.ModelAdmin):
     readonly_fields = ('unique_link', 'link_card', 'created_at', 'updated_at')
     list_filter = ("status", "ano", "data_conclusao", "curso")
     search_fields = ("nome_completo", "curso", "codigo", "documento")
+    #para botao de edicao de link unico
+    readonly_fields = ('unique_link', 'link_card', 'created_at', 'updated_at', 'generate_link_button')
     date_hierarchy = 'data_conclusao'
     list_per_page = 50
     ordering = ('-created_at',)
@@ -46,7 +48,22 @@ class CertificationAdmin(admin.ModelAdmin):
             "fields": ("created_at", "updated_at"),
             "classes": ("collapse",),
         }),
+        
     )
+
+    def generate_link_button(self, obj):
+        if not obj.pk:
+            return "Salve primeiro para gerar o link."
+        if obj.unique_link:
+            return format_html(
+                '<span style="color: #28a745; font-weight: 500;">Link já gerado!</span>'
+            )
+        # botão chamando URL de admin customizada
+        return format_html(
+            '<a class="button" href="{}">Gerar Link Único</a>',
+            f'/admin/certifications/certification/{obj.pk}/generate_link/'
+        )
+    generate_link_button.short_description = "Ações"
 
     inlines = [ModuloInline]
 
