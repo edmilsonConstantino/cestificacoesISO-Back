@@ -1,6 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from django.core.exceptions import ValidationError
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 import logging
 
 from .models import Submission
@@ -8,12 +10,15 @@ from .serializers import SubmissionSerializer
 
 logger = logging.getLogger(__name__)
 
+@method_decorator(csrf_exempt, name='dispatch')
 class SubmissionCreateView(generics.CreateAPIView):
+    """
+    Cria submissões sem bloqueio CSRF, com logging e tratamento de erros.
+    """
     queryset = Submission.objects.all()
     serializer_class = SubmissionSerializer
 
     def create(self, request, *args, **kwargs):
-        """Cria submission com tratamento de erros e logging"""
         try:
             serializer = self.get_serializer(data=request.data)
             
