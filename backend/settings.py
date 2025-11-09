@@ -170,7 +170,8 @@ CORS_ALLOWED_ORIGINS.extend([
     'https://www.cptec.co.mz',
     'https://cptec.co.mz',
     'http://www.cptec.co.mz',
-    'http://cptec.co.mz'
+    'http://cptec.co.mz',
+    'https://cptec-co-mz.vercel.app'
 ])
 
 CORS_ALLOW_CREDENTIALS = True
